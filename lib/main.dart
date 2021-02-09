@@ -4,6 +4,9 @@ import 'dart:convert' show json;
 import "package:http/http.dart" as http;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+FirebaseAuth _auth = FirebaseAuth.instance;
 
 void main() {
   runApp(MyApp());
@@ -41,6 +44,14 @@ GoogleSignIn _googleSignIn = GoogleSignIn(
 class _MyHomePageState extends State<MyHomePage> {
   GoogleSignInAccount _currentUser;
   String _contactText;
+
+  // GoogleSignIn _googleSignIn = GoogleSignIn(
+  //   scopes: <String>[
+  //     'email',
+  //     'https://www.googleapis.com/auth/contacts.readonly',
+  //   ],
+  // );
+  String idToken;
 
   @override
   void initState() {
@@ -152,10 +163,47 @@ class _MyHomePageState extends State<MyHomePage> {
           const Text("You are not currently signed in."),
           ElevatedButton(
             child: const Text('SIGN IN'),
-            onPressed: _handleSignIn,
+            //onPressed: _handleSignIn,
+            onPressed: _signInWithGoogle,
           ),
         ],
       );
+    }
+  }
+
+  //Example code of how to sign in with Google.
+  Future<void> _signInWithGoogle() async {
+    try {
+      UserCredential userCredential;
+
+      // if (kIsWeb) {
+      //   GoogleAuthProvider googleProvider = GoogleAuthProvider();
+      //   userCredential = await _auth.signInWithPopup(googleProvider);
+      // } else {
+      final GoogleSignInAccount googleUser = await GoogleSignIn().signIn();
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final GoogleAuthCredential googleAuthCredential =
+          GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      userCredential = await _auth.signInWithCredential(googleAuthCredential);
+      // }
+
+      final user = userCredential.user;
+      print('Sign In ${user.uid} with Google');
+      // Scaffold.of(context).showSnackBar(SnackBar(
+      //   content: Text('Sign In ${user.uid} with Google'),
+      // ));
+    } catch (e) {
+      //print(e);
+      print('Failed to sign in with Google: $e');
+      // Scaffold.of(context).showSnackBar(
+      //   SnackBar(
+      //     content: Text('Failed to sign in with Google: $e'),
+      //   ),
+      // );
     }
   }
 }
